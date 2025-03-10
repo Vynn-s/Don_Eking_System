@@ -6,8 +6,8 @@ const productPrices = {
   atsara: 15,
   empanada: 15,
   soy: 15,
-  s_box: 40,
-  b_box: 120,
+  neck: 10,
+  mango_float: 120,
 };
 
 // Initialize quantities
@@ -18,8 +18,8 @@ let quantities = {
   atsara: 0,
   empanada: 0,
   soy: 0,
-  s_box: 0,
-  b_box: 0,
+  neck: 0,
+  mango_float: 0,
 };
 
 // Log data
@@ -28,7 +28,7 @@ let salesLog = [];
 // Fetch sales data from the server
 async function fetchSalesData() {
   try {
-    const response = await fetch('/sales/data');
+    const response = await fetch('http://localhost:3000/data');
     const data = await response.json();
     salesLog = data.map(sale => ({
       ...sale,
@@ -79,51 +79,51 @@ document.getElementById('confirmSale').addEventListener('click', async () => {
   const timestamp = new Date().toLocaleString();
 
   const salesData = Object.keys(quantities)
-    .filter(product => quantities[product] > 0)
-    .map(product => ({
-      name: product.charAt(0).toUpperCase() + product.slice(1),
-      category: product,
-      unitPrice: productPrices[product],
-      quantity: quantities[product],
-      totalPrice: quantities[product] * productPrices[product],
-      timestamp: timestamp
-    })).concat(salesLog);
+      .filter(product => quantities[product] > 0)
+      .map(product => ({
+          name: product.charAt(0).toUpperCase() + product.slice(1),
+          category: product,
+          unitPrice: productPrices[product],
+          quantity: quantities[product],
+          totalPrice: quantities[product] * productPrices[product],
+          timestamp: timestamp
+      })).concat(salesLog);
 
   try {
-    const response = await fetch('/sales/submit-sale', {  // Ensure the URL is correct
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sales: salesData })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      // Reset quantities after submission
-      Object.keys(quantities).forEach(product => {
-        quantities[product] = 0;
-        document.querySelector(`.quantity[data-product="${product}"]`).textContent = 0;
+      const response = await fetch('http://localhost:3000/submit-sale', {  // Ensure the URL is correct
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sales: salesData })
       });
 
-      salesLog = []; // Clear custom items log
-      updateTotalPrice(); // Reset the total price
-      fetchSalesData(); // Fetch and update the sales log table
+      const result = await response.json();
+      
+      if (response.ok) {
+          // Reset quantities after submission
+          Object.keys(quantities).forEach(product => {
+              quantities[product] = 0;
+              document.querySelector(`.quantity[data-product="${product}"]`).textContent = 0;
+          });
 
-      // Show success popup
-      const successPopup = document.getElementById('successPopup');
-      successPopup.style.display = 'flex';
-      setTimeout(() => {
-        successPopup.style.display = 'none';
-      }, 3000); // Hide after 3 seconds
+          salesLog = []; // Clear custom items log
+          updateTotalPrice(); // Reset the total price
+          fetchSalesData(); // Fetch and update the sales log table
 
-      // Play success sound
-      playSuccessSound();
-    } else {
-      alert(result.message);
-    }
+          // Show success popup
+          const successPopup = document.getElementById('successPopup');
+          successPopup.style.display = 'flex';
+          setTimeout(() => {
+            successPopup.style.display = 'none';
+          }, 3000); // Hide after 3 seconds
+
+          // Play success sound
+          playSuccessSound();
+      } else {
+          alert(result.message);
+      }
   } catch (error) {
-    console.error("Error submitting sales:", error);
-    alert("Failed to submit sales.");
+      console.error("Error submitting sales:", error);
+      alert("Failed to submit sales.");
   }
 
   document.getElementById('confirmationModal').style.display = 'none';
@@ -231,7 +231,7 @@ async function deleteSale(index) {
   row.classList.add('fade-out');
   setTimeout(async () => {
     try {
-      const response = await fetch(`/sales/delete-sale/${saleToDelete.id}`, {
+      const response = await fetch(`http://localhost:3000/delete-sale/${saleToDelete.id}`, {
         method: 'DELETE'
       });
 
@@ -251,7 +251,7 @@ async function deleteSale(index) {
 // Update sale in database
 async function updateSaleInDatabase(updatedSale) {
   try {
-    const response = await fetch(`/sales/update-sale/${updatedSale.id}`, {
+    const response = await fetch(`http://localhost:3000/update-sale/${updatedSale.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedSale)
@@ -322,7 +322,7 @@ document.getElementById('customItemForm').addEventListener('submit', (event) => 
 
 // Success sound
 function playSuccessSound() {
-  const audio = new Audio('/assets/sounds/success-sound.mp3'); // Ensure the path is correct
+  const audio = new Audio('../assets/sounds/success-sound.mp3'); // Ensure the path is correct
   audio.play().catch(error => console.error('Error playing sound:', error));
 }
 
